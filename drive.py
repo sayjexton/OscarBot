@@ -51,6 +51,19 @@ def oscar_point_right(speed):
 	back_left_motor.forward(speed)
 	back_right_motor.backward(speed)
 
+def oscar_point_deg(deg):
+	if (deg > 90):
+		oscar_point_left(1)
+		oscar_stop()
+	elif (deg < 90):
+		oscar_point_right(1)
+		oscar_stop()
+	elif (deg == 90):
+		oscar_point_left(1)
+		oscar_stop()
+	else:
+		print("Error, turn radius not in (0,2pi).")
+
 def oscar_strafe_left(speed):
 	front_left_motor.backward(speed)
 	front_right_motor.forward(speed)
