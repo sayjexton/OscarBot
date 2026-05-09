@@ -18,7 +18,7 @@ front_us = DistanceSensor(trigger=21, echo=19)
 left_us = DistanceSensor(trigger=0, echo=5)
 right_us = DistanceSensor(trigger=14, echo=15)
 back_us = DistanceSensor(trigger=20, echo=16)
-limit = 15
+limit = 25
 
 def servo_up():
 	left_servo.value = 0.9
@@ -95,13 +95,16 @@ while True:
 	servo_detach()
 	
 	# check if there are objects
-	distance_front = front_us.distance() * 100
-	distance_back = back_us.distance() * 100
-	distance_left = left_us.distance() * 100
-	distance_right = right_us.distance() * 100
+	distance_front = front_us.distance * 100
+	distance_back = back_us.distance * 100
+	distance_left = left_us.distance * 100
+	distance_right = right_us.distance * 100
+	
+	print(distance_front)
+	
 
-	if (distance_front >= limit and distance_back >= limit and distance_left >= limit and distance_right >= limit):
-		oscar_forward()
+	if (distance_front >= limit):
+		oscar_forward(1)
 	else:
 		oscar_stop()
 		sleep(1)
