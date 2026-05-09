@@ -52,15 +52,23 @@ def oscar_point_right(speed):
 	back_right_motor.backward(speed)
 
 def oscar_point_deg(deg):
-	if (deg > 90):
+	t = (0.77*deg)/90
+	
+	if (deg > 0 and deg > 90): # fix the paramaters on these
 		oscar_point_left(1)
+		sleep(t)
 		oscar_stop()
-	elif (deg < 90):
+		sleep(100)
+	elif (deg < 90 and deg <):
 		oscar_point_right(1)
+		sleep(t)
 		oscar_stop()
+		sleep(100)
 	elif (deg == 90):
 		oscar_point_left(1)
+		sleep(t)
 		oscar_stop()
+		sleep(100)
 	else:
 		print("Error, turn radius not in (0,2pi).")
 
@@ -84,3 +92,4 @@ def oscar_stop():
 
 while True:
 	servo_detach()
+	oscar_point_deg(30)
