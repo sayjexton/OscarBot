@@ -9,7 +9,6 @@ back_left_motor = Motor(forward=7, backward=8, enable=23)
 back_right_motor = Motor(forward=22, backward=4, enable=11)
 front_right_motor = Motor(forward=9, backward=10, enable=6)
 
-
 # Servos
 left_servo = Servo(13)
 right_servo = Servo(1)
@@ -27,21 +26,48 @@ def servo_up():
 def servo_detach():
 	left_servo.detach()
 	right_servo.detach()
+	
+def oscar_forward(speed):
+	front_left_motor.forward(speed)
+	front_right_motor.forward(speed)
+	back_left_motor.forward(speed)
+	back_right_motor.forward(speed)
+	
+def oscar_backward(speed):
+	front_left_motor.backward(speed)
+	front_right_motor.backward(speed)
+	back_left_motor.backward(speed)
+	back_right_motor.backward(speed)
 
-	
-def oscar_forward():
-	front_left_motor.forward(0.5)
-	front_right_motor.forward(0.5)
-	back_left_motor.forward(0.5)
-	back_right_motor.forward(0.5)
-	
-def oscar_backward():
-	front_left_motor.backward()
-	front_right_motor.backward()
-	back_left_motor.backward()
-	back_right_motor.backward()
-	
+def oscar_point_left(speed):
+	front_left_motor.backward(speed)
+	front_right_motor.forward(speed)
+	back_left_motor.backward(speed)
+	back_right_motor.forward(speed)
+
+def oscar_point_right(speed):
+	front_left_motor.forward(speed)
+	front_right_motor.backward(speed)
+	back_left_motor.forward(speed)
+	back_right_motor.backward(speed)
+
+def oscar_strafe_left(speed):
+	front_left_motor.backward(speed)
+	front_right_motor.forward(speed)
+	back_left_motor.forward(speed)
+	back_right_motor.backward(speed)
+
+def oscar_strafe_right(speed):
+	front_left_motor.forward(speed)
+	front_right_motor.backward(speed)
+	back_left_motor.backward(speed)
+	back_right_motor.forward(speed)
+
+def oscar_stop():
+	front_left_motor.stop()
+	front_right_motor.stop()
+	back_left_motor.stop()
+	back_right_motor.stop()
 
 while True:
 	servo_detach()
-	oscar_forward()
