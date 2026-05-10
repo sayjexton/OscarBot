@@ -23,6 +23,7 @@ front_left_motor = Motor(forward=25, backward=24, enable=18)
 back_left_motor = Motor(forward=7, backward=8, enable=23)
 back_right_motor = Motor(forward=22, backward=4, enable=11)
 front_right_motor = Motor(forward=9, backward=10, enable=6)
+turn_factor = 0.9
 
 # servos
 left_servo = Servo(13)
@@ -54,6 +55,15 @@ def oscar_forward(speed):
 	front_right_motor.forward(speed)
 	back_left_motor.forward(speed)
 	back_right_motor.forward(speed)
+
+def oscar_forward_limited(distance):
+	t=1
+	front_left_motor.forward(0.8)
+	front_right_motor.forward(0.8)
+	back_left_motor.forward(0.8)
+	back_right_motor.forward(0.8)
+	sleep(t)
+	oscar_stop()
 	
 def oscar_backward(speed):
 	front_left_motor.backward(speed)
@@ -63,7 +73,7 @@ def oscar_backward(speed):
 
 def oscar_point_left(speed, deg):
 	if (deg != "inf"):
-		t = (0.9*deg)/90
+		t = (turn_factor*deg)/90
 		front_left_motor.backward(speed)
 		front_right_motor.forward(speed)
 		back_left_motor.backward(speed)
@@ -80,7 +90,7 @@ def oscar_point_left(speed, deg):
 
 def oscar_point_right(speed, deg):
 	if (deg != "inf"):
-		t = (0.9*deg)/90
+		t = (turn_factor*deg)/90
 		front_left_motor.forward(speed)
 		front_right_motor.backward(speed)
 		back_left_motor.forward(speed)
@@ -94,16 +104,6 @@ def oscar_point_right(speed, deg):
 		back_right_motor.backward(speed)
 	else:
 		print("Invalid degree measure input pointing right.")
-	
-def oscar_spin():
-	t = 0.77*4
-	oscar_point_left(1)
-	sleep(t)
-	oscar_stop()
-	sleep(0.5)
-	oscar_point_right(1)
-	sleep(t)
-	oscar_stop()
 
 ########### APRILTAG
 fx = 4208
@@ -139,12 +139,10 @@ def at_get_delta_x(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		d_x = numpy.positive(r.pose_t[1])
-		
-		if (d_x < 0):
-			d_x *= -1
-		return d_x
+		delta_x = r.pose_t[0]
+		return delta_x
 	
+'''
 def at_get_h(frame):
 	gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
@@ -155,12 +153,9 @@ def at_get_h(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		h = numpy.positive(r.pose_t[0])
-		
-		if (h < 0):
-			h *= -1
-		
+		h = r.pose_t[1]
 		return h
+'''
 
 def at_get_corners(frame):
 	gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -176,10 +171,12 @@ def at_get_corners(frame):
 	else:
 		return (1920,0),(0,1080)
 
+'''
 def at_get_theta(delta_x, h):
 	theta_rad = numpy.arcsin(delta_x/h)
 	theta_deg = numpy.rad2deg(theta_rad)
 	return theta_deg
+'''
 		
 
 ########### BLOB
@@ -237,67 +234,55 @@ if not camera.isOpened():
 looping = True
 check = "not found"
 
+# initial check
+check = at_check()
+if (check != "found"):
+	print("Tag not found.")
+	looping = False
+
+# main loop
 while looping:
 	ret,frame = camera.read()
 	if not ret:
 		print("Camera returning no input.")
 		looping = False
 	
-	# check if there are objects
 	distance_front = front_us.distance * 100
 	distance_back = back_us.distance * 100
 	distance_left = left_us.distance * 100
 	distance_right = right_us.distance * 100
-	check = at_check(frame)
-		
-	if (check == "not found"):
-		# go forward if there are no obstacles
-		if (distance_front >= limit):
-			servo_detach()
-			oscar_forward(1)
 
-		# if there is an obstacle
+	# final navigation and cleaning
+	if (d_x > -1 and d_x < 1 and distance_front < limit):
+		print("Arrived")
+		# check if dirty
+		# if dirty, clean
+		# if not, don't
+		# when cleaned do a twirl
+
+	# navigation to tag
+	elif (distance_front >= limit):
+		d_x = at_get_delta_x()
+
+		if (d_x >= -1):
+			oscar_point_right(1, 90)
+			oscar_forward_limited(d_x)
+			oscar_point_left(1, 90)
+
+		elif (d_x <= 1):
+			oscar_point_left(1,90)
+			oscar_forward_limited(d_x)
+			oscar_point_right(1, 90)
+
+		elif (d_x > -1 and d_x < 1):
+			oscar_forward(0.8)
+
 		else:
-			# stop and assess what would be an ideal path + checks for apriltag
-			oscar_stop()
-			sleep(1)
-
-			if (distance_left > distance_right):
-				oscar_point_left(1, 90)
-				
-			elif (distance_left < distance_right):
-				oscar_point_right(1, 90)
-				
-			elif (distance_right == distance_left):
-				guess = random.randint(0,1)
-				if (guess == 0):
-					oscar_point_left(1,90)
-					
-				else:
-					oscar_point_right(1, 90)
-			else:
-				print("Oscar is lost.")	
-			sleep(1)
-	
-	elif (check == "found"):
-		oscar_stop()
-		print("tag found")
-		print("dx: ", at_get_delta_x(frame))
-		print("h: ", at_get_h(frame))
-		print("theta: ", at_get_theta(at_get_delta_x(frame),at_get_h(frame)))
+			print("Oscar is lost.")
 		
-		# if angle less than 90 turn right, greater than 90 turn left
-		sleep (5)
-		looping = False
-
-	# if found find angle between oscar and tag
-	# turn to that angle
-	# drive up to tag
-	# stop
-	# check if dirty
-	# if dirty, clean
-	# if not, don't
-	# when cleaned do a twirl
+		sleep(1)
+		oscar_stop()
+		sleep(1)
 		
 	key = cv.waitKey(100)
 	if key == 13:
