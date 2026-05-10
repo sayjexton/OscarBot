@@ -2,6 +2,7 @@ from gpiozero import Motor
 from gpiozero import Servo
 from gpiozero import DistanceSensor
 from time import sleep
+import random
 
 # Motors
 front_left_motor = Motor(forward=25, backward=24, enable=18)
@@ -90,6 +91,10 @@ def oscar_spin():
 	sleep(t)
 	oscar_stop()
 
+def poll():
+
+	print()
+
 # Object avoidance
 while True:
 	servo_detach()
@@ -100,22 +105,25 @@ while True:
 	distance_left = left_us.distance * 100
 	distance_right = right_us.distance * 100
 	
-	print(distance_front)
-	
-
+	# go forward if there are no obstacles
 	if (distance_front >= limit):
 		oscar_forward(1)
+
+	# if there is an obstacle
 	else:
+		# stop and assess what would be an ideal path
 		oscar_stop()
 		sleep(1)
-		if (distance_front < limit):
+		
+		if (distance_left > distance_right):
 			oscar_point_left(1, 90)
-			sleep(0.5)
-			oscar_point_right(1, 180)
-			sleep(0.5)
-		elif (distance_back < limit):
-			print()
-		elif (distance_left < limit):
-			print()
-		elif (distance_right < limit):
-			print()
+		elif (distance_right < distance_left):
+			oscar_point_right(1, 90)
+		elif (distance_right == distance_left):
+			guess = random.randint(0,1)
+			if (guess == 0):
+				oscar_point_left(1, 90)
+			else:
+				oscar_point_right(1, 90)
+		else:
+			print("Oscar is lost.")
