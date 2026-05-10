@@ -40,98 +40,96 @@ bDetector = cv.SimpleBlobDetector_create(bDetector_params)
 
 # ----- FIND OFFSET ------
 def at_get_delta_x(frame):
-    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+	gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-    results = at_detector.detect(
-        gray, 
-        estimate_tag_pose=True,
-        camera_params=at_detector_params,
-        tag_size=tag_size)
+	results = at_detector.detect(
+		gray, 
+		estimate_tag_pose=True,
+		camera_params=at_detector_params,
+		tag_size=tag_size)
 
-    for r in results:
-        delta_x = r.pose_t[0]
-        print("Distance from Center: ", str(delta_x), "m")
-        return delta_x
-    
+	for r in results:
+		delta_x = r.pose_t[0]
+		print("Distance from Center: ", str(delta_x), "m")
+		return delta_x
+	
 def at_get_h(frame):
-    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+	gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-    results = at_detector.detect(
-        gray, 
-        estimate_tag_pose=True,
-        camera_params=at_detector_params,
-        tag_size=tag_size)
+	results = at_detector.detect(
+		gray, 
+		estimate_tag_pose=True,
+		camera_params=at_detector_params,
+		tag_size=tag_size)
 
-    for r in results:
-        h = r.pose_t[1]
-        return h
+	for r in results:
+		h = r.pose_t[1]
+		print("Distance from Center: ", str(h), "m")
+		return h
 
 # ----- FIND CORNER LOCATIONS -----
 def get_corners(frame):
-    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+	gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-    results = at_detector.detect(
-        gray, 
-        estimate_tag_pose=True,
-        camera_params=at_detector_params,
-        tag_size=tag_size)
+	results = at_detector.detect(
+		gray, 
+		estimate_tag_pose=True,
+		camera_params=at_detector_params,
+		tag_size=tag_size)
 
-    if results:
-        return results[0].corners[0],results[0].corners[2]
-    else:
-        return (1920,0),(0,1080)
-    
+	if results:
+		return results[0].corners[0],results[0].corners[2]
+	else:
+		return (1920,0),(0,1080)
+	
 # ----- FIND BLOBS -----
 def find_blobs(frame, corner1, corner2):
-    x_start = int(corner2[0])
-    x_end = int(corner1[0])
-    y_start = int(corner1[1])
-    y_end = int(corner2[1])
+	x_start = int(corner2[0])
+	x_end = int(corner1[0])
+	y_start = int(corner1[1])
+	y_end = int(corner2[1])
 
-    if (x_start != 0):
-        cv.rectangle(frame,(x_start,y_start),(x_end,y_end),(255,255,255),-1)
-    
-    blob = bDetector.detect(frame)
-    
-    output = cv.drawKeypoints(frame, 
-                              blob, 
-                              numpy.array([]), 
-                              (0, 0, 0),
-                              cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    
-    cv.imshow("Blobs Detected", output)
+	if (x_start != 0):
+		cv.rectangle(frame,(x_start,y_start),(x_end,y_end),(255,255,255),-1)
+	
+	blob = bDetector.detect(frame)
+	
+	output = cv.drawKeypoints(frame, 
+							  blob, 
+							  numpy.array([]), 
+							  (0, 0, 0),
+							  cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+	
+	cv.imshow("Blobs Detected", output)
 
 # ----- DETECTION LOOP ------
 camera = cv.VideoCapture(0)
 looping = True
 
 if not camera.isOpened():
-    print("Cannot open camera.")
-    exit()
+	print("Cannot open camera.")
+	exit()
 
 while looping:
-    ret,frame = camera.read()
-    if not ret:
-        print("Camera returning no input.")
-        looping = False
+	ret,frame = camera.read()
+	if not ret:
+		print("Camera returning no input.")
+		looping = False
+	
+	at_get_h(frame)
+	at_get_delta_x(frame)
+	sleep(1)
 
-    print(at_get_h(frame))
-    sleep(0.5)
-
-    cv.imshow('Camera Feed', frame)
-
-    #corner1,corner2 = get_corners(frame)
-    #find_blobs(frame,corner1,corner2)
-    
-    #print("x: ", corner2[0],corner1[0])
-    #print("y: ", corner1[1],corner2[1])
-    
-    # break loop if return key pressed
-    key = cv.waitKey(100)
-    if key == 13:
-        looping = False
-    
-    print(at_get_delta_x(frame))
+	#corner1,corner2 = get_corners(frame)
+	#find_blobs(frame,corner1,corner2)
+	
+	#print("x: ", corner2[0],corner1[0])
+	#print("y: ", corner1[1],corner2[1])
+	
+	# break loop if return key pressed
+	key = cv.waitKey(100)
+	if key == 13:
+		looping = False
 
 camera.release()
 cv.destroyAllWindows()
