@@ -263,19 +263,37 @@ while looping:
 		
 		if (distance_left > distance_right):
 			oscar_point_left(1, 90)
-			at_poll(frame)
+			found = "not found"
+			found = at_poll(frame)
+			if (found == "detected"):
+				print ("found")
+				looping = False
 			sleep(1)
 		elif (distance_right < distance_left):
 			oscar_point_right(1, 90)
-			at_poll(frame)
+			found = "not detected"
+			found = at_poll(frame)
+			if (found == "detected"):
+				print ("found")
+				looping = False
 			sleep(1)
 		elif (distance_right == distance_left):
 			guess = random.randint(0,1)
 			if (guess == 0):
 				oscar_point_left(1, 90)
+				found = "not detected"
+				found = at_poll(frame)
+				if (found == "detected"):
+				    print ("found")
+					looping = False
 				sleep(1)
 			else:
 				oscar_point_right(1, 90)
+				found = "not detected"
+				found = at_poll(frame)
+				if (found == "detected"):
+				    print ("found")
+					looping = False
 				sleep(1)
 		else:
 			print("Oscar is lost.")
