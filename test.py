@@ -1,13 +1,19 @@
+from gpiozero import Motor
+from gpiozero import Servo
+from gpiozero import DistanceSensor
+from time import sleep
+import random
+import sys
+sys.path.append('/home/oscar/oscar_dev/env/lib/python3.13/site-packages')
 import cv2 as cv
 from pupil_apriltags import Detector
 import numpy
-from time import sleep
 
 # ----- APRILTAG DETECTOR -----
-fx = 500
-fy = 500
-cx = 500
-cy = 500
+fx = 4208
+fy = 3670
+cx = 322.6
+cy = 236.5
 
 at_detector = Detector(families='tag36h11')
 at_detector_params = (fx, fy, cx, cy)
@@ -50,7 +56,6 @@ def at_get_delta_x(frame):
 
 	for r in results:
 		delta_x = r.pose_t[0]
-		print("Distance from Center: ", str(delta_x), "m")
 		return delta_x
 	
 def at_get_h(frame):
@@ -63,9 +68,16 @@ def at_get_h(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		h = r.pose_t[1]
-		print("Distance from Center: ", str(h), "m")
+		h = r.pose_t[2]
 		return h
+
+def at_get_theta(delta_x, h):
+	if (delta_x != None and h != None):
+		theta_rad = numpy.arcsin(delta_x/h)
+		theta_deg = numpy.rad2deg(theta_rad)
+		return theta_deg
+	else:
+		return "no angle"
 
 # ----- FIND CORNER LOCATIONS -----
 def get_corners(frame):
@@ -116,9 +128,11 @@ while looping:
 		print("Camera returning no input.")
 		looping = False
 	
-	at_get_h(frame)
-	at_get_delta_x(frame)
-	sleep(1)
+	h = at_get_h(frame)
+	dx = at_get_delta_x(frame)
+	print ("h ", h)
+	print("dx ", dx)
+	print("theta: ", at_get_theta(dx, h))
 
 	#corner1,corner2 = get_corners(frame)
 	#find_blobs(frame,corner1,corner2)
