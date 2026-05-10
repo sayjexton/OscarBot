@@ -38,8 +38,12 @@ limit = 25
 cleaning_limit = 30
 
 def servo_up():
-	left_servo.value = 0.9
+	left_servo.detach()
 	right_servo.value = 1
+
+def servo_down():
+	left_servo.detach()
+	right_servo.value = 0.5
 
 def servo_detach():
 	left_servo.detach()
@@ -109,10 +113,10 @@ def oscar_point_right(speed, deg):
 def oscar_clean():
 	start = time()
 	while (time() - start < 1):
-		oscar_forward(0.7)
-		servo_up()
+		oscar_forward(0.5)
+		servo_down()
 		sleep(0.5)
-		servo_detach()
+		servo_up()
 		sleep(0.5)
 
 ########### APRILTAG
@@ -254,14 +258,13 @@ while looping:
 		print("Camera returning no input.")
 		looping = False
 	
-	servo_detach()
 
 	corner1,corner2 = at_get_corners(frame)
 	blob_check = find_blobs(frame, corner1, corner2)
 	
 	if blob_check == True:
 		print ("Blobs detected.")
-		# oscar_clean()
+		oscar_clean()
 		
 	key = cv.waitKey(100)
 	if key == 13:
