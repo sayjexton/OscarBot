@@ -23,7 +23,7 @@ front_left_motor = Motor(forward=25, backward=24, enable=18)
 back_left_motor = Motor(forward=7, backward=8, enable=23)
 back_right_motor = Motor(forward=22, backward=4, enable=11)
 front_right_motor = Motor(forward=9, backward=10, enable=6)
-turn_factor = 0.9
+turn_factor = 0.77
 
 # servos
 left_servo = Servo(13)
@@ -139,7 +139,7 @@ def at_get_delta_x(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		delta_x = r.pose_t[0]
+		delta_x = r.pose_t[1]
 		return delta_x
 	
 '''
@@ -153,7 +153,7 @@ def at_get_h(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		h = r.pose_t[1]
+		h = r.pose_t[0]
 		return h
 '''
 
@@ -232,12 +232,9 @@ if not camera.isOpened():
 
 ########## MAIN LOOP
 looping = True
-
-# initial check
-check = at_check()
-if (check != "found"):
-	print("Tag not found.")
-	looping = False
+override = False
+guessing = False
+guess = 0
 
 # main loop
 while looping:
@@ -246,42 +243,43 @@ while looping:
 		print("Camera returning no input.")
 		looping = False
 	
+	servo_detach()
+	
 	distance_front = front_us.distance * 100
 	distance_back = back_us.distance * 100
 	distance_left = left_us.distance * 100
 	distance_right = right_us.distance * 100
+	check = at_check(frame)
+	d_x = at_get_delta_x(frame)
 
-	# final navigation and cleaning
-	if (d_x > -1 and d_x < 1 and distance_front < limit):
-		print("Arrived")
-		# check if dirty
-		# if dirty, clean
-		# if not, don't
-		# when cleaned do a twirl
-
-	# navigation to tag
-	elif (distance_front >= limit):
-		d_x = at_get_delta_x()
-
-		if (d_x >= -1):
-			oscar_point_right(1, 90)
-			oscar_forward_limited(d_x)
-			oscar_point_left(1, 90)
-
-		elif (d_x <= 1):
-			oscar_point_left(1,90)
-			oscar_forward_limited(d_x)
-			oscar_point_right(1, 90)
-
-		elif (d_x > -1 and d_x < 1):
-			oscar_forward(0.8)
-
+	if ((distance_front > limit and override == False) or guessing == True):
+		# navigation
+		if (d_x != None):
+			if (d_x > -0.05 and d_x < 0.05):
+				if (guessing == True):
+					guessing = False
+				oscar_forward(1)
+				sleep(2)
+				if (distance_front < limit):
+					override = True
+					print("arrived")
+			elif (d_x != None and (d_x < -0.05 or d_x > 0.05)):
+				guessing = True
+				oscar_point_left(1, 20)
+				sleep(1)
+			else:
+				print("oscar is lost")
+			
+			oscar_stop()
+			sleep(1)
 		else:
-			print("Oscar is lost.")
-		
-		sleep(1)
-		oscar_stop()
-		sleep(1)
+			guessing = True
+			oscar_point_left(1, 20)
+			sleep(1)
+	else:
+		if (guessing == False and override == False):
+			oscar_backward(1)
+			sleep(4)
 		
 	key = cv.waitKey(100)
 	if key == 13:
