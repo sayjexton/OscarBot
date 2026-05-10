@@ -63,7 +63,7 @@ def oscar_backward(speed):
 
 def oscar_point_left(speed, deg):
 	if (deg != "inf"):
-		t = (0.77*deg)/90
+		t = (0.9*deg)/90
 		front_left_motor.backward(speed)
 		front_right_motor.forward(speed)
 		back_left_motor.backward(speed)
@@ -80,7 +80,7 @@ def oscar_point_left(speed, deg):
 
 def oscar_point_right(speed, deg):
 	if (deg != "inf"):
-		t = (0.77*deg)/90
+		t = (0.9*deg)/90
 		front_left_motor.forward(speed)
 		front_right_motor.backward(speed)
 		back_left_motor.forward(speed)
@@ -139,8 +139,11 @@ def at_get_delta_x(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		x_dist = r.pose_t[0]
-		return x_dist
+		d_x = numpy.positive(r.pose_t[1])
+		
+		if (d_x < 0):
+			d_x *= -1
+		return d_x
 	
 def at_get_h(frame):
 	gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -152,7 +155,11 @@ def at_get_h(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		h = r.pose_t[1]
+		h = numpy.positive(r.pose_t[0])
+		
+		if (h < 0):
+			h *= -1
+		
 		return h
 
 def at_get_corners(frame):
@@ -241,6 +248,7 @@ while looping:
 	distance_back = back_us.distance * 100
 	distance_left = left_us.distance * 100
 	distance_right = right_us.distance * 100
+	check = at_check(frame)
 		
 	if (check == "not found"):
 		# go forward if there are no obstacles
@@ -256,35 +264,28 @@ while looping:
 
 			if (distance_left > distance_right):
 				oscar_point_left(1, 90)
-				check = at_check(frame)
-				sleep(1)
 				
 			elif (distance_left < distance_right):
 				oscar_point_right(1, 90)
-				check = at_check(frame)
-				sleep(1)
 				
 			elif (distance_right == distance_left):
 				guess = random.randint(0,1)
 				if (guess == 0):
 					oscar_point_left(1,90)
-					check = at_check(frame)
-					sleep(1)
 					
 				else:
 					oscar_point_right(1, 90)
-					check = at_check(frame)
-					sleep(1)
 			else:
 				print("Oscar is lost.")	
+			sleep(1)
 	
 	elif (check == "found"):
 		oscar_stop()
 		print("tag found")
-		delta_x = at_get_delta_x(frame)
-		h = at_get_h(frame)
-		theta = at_get_theta(delta_x,h)
-		print("angle: ", str(theta))
+		print("dx: ", at_get_delta_x(frame))
+		print("h: ", at_get_h(frame))
+		print("theta: ", at_get_theta(at_get_delta_x(frame),at_get_h(frame)))
+		
 		# if angle less than 90 turn right, greater than 90 turn left
 		sleep (5)
 		looping = False
@@ -303,4 +304,4 @@ while looping:
 		looping = False
 
 camera.release()
-cv.destroyAllWindows()# sigh
+cv.destroyAllWindows()
