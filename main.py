@@ -37,13 +37,17 @@ back_us = DistanceSensor(trigger=20, echo=16)
 limit = 25
 cleaning_limit = 30
 
-def servo_up():
-	left_servo.value = 0.9
-	right_servo.value = 1
-
 def servo_detach():
 	left_servo.detach()
 	right_servo.detach()
+
+def servo_up():
+	left_servo.detach()
+	right_servo.value = 1
+
+def servo_down():
+	left_servo.detach()
+	right_servo.value = 0.5
 	 
 def oscar_stop():
 	front_left_motor.stop()
@@ -53,9 +57,9 @@ def oscar_stop():
 
 def oscar_forward(speed):
 	front_left_motor.forward(speed)
-	front_right_motor.forward(speed-0.2)
+	front_right_motor.forward(speed)
 	back_left_motor.forward(speed)
-	back_right_motor.forward(speed-0.2)
+	back_right_motor.forward(speed)
 
 def oscar_forward_limited(distance):
 	t=1
@@ -109,10 +113,10 @@ def oscar_point_right(speed, deg):
 def oscar_clean():
 	start = time()
 	while (time() - start < 1):
-		oscar_forward(0.7)
-		servo_up()
+		oscar_forward(0.5)
+		servo_down()
 		sleep(0.5)
-		servo_detach()
+		servo_up()
 		sleep(0.5)
 
 ########### APRILTAG
@@ -149,10 +153,9 @@ def at_get_delta_x(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		delta_x = r.pose_t[1]
+		delta_x = r.pose_t[0]
 		return delta_x
 	
-'''
 def at_get_h(frame):
 	gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
@@ -163,9 +166,16 @@ def at_get_h(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		h = r.pose_t[0]
+		h = r.pose_t[2]
 		return h
-'''
+
+def at_get_theta(delta_x, h):
+	if (delta_x != None and h != None):
+		theta_rad = numpy.arcsin(delta_x/h)
+		theta_deg = numpy.rad2deg(theta_rad)
+		return theta_deg
+	else:
+		return "no angle"
 
 def at_get_corners(frame):
 	gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -180,14 +190,6 @@ def at_get_corners(frame):
 		return results[0].corners[0],results[0].corners[2]
 	else:
 		return (1920,0),(0,1080)
-
-'''
-def at_get_theta(delta_x, h):
-	theta_rad = numpy.arcsin(delta_x/h)
-	theta_deg = numpy.rad2deg(theta_rad)
-	return theta_deg
-'''
-		
 
 ########### BLOB
 bDetector_params = cv.SimpleBlobDetector.Params()
@@ -223,15 +225,18 @@ def find_blobs(frame, corner1, corner2):
 	if (x_start != 0):
 		cv.rectangle(frame,(x_start,y_start),(x_end,y_end),(255,255,255),-1)
 	
-	blob = bDetector.detect(frame)
+	blobs = bDetector.detect(frame)
 	
 	output = cv.drawKeypoints(frame, 
-							  blob, 
+							  blobs, 
 							  numpy.array([]), 
 							  (0, 0, 0),
 							  cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 	
-	return blob
+	if blobs:
+		return True
+	else:
+		return False
 
 ########## CAMERA SETUP
 camera = cv.VideoCapture(0)
@@ -265,21 +270,17 @@ while looping:
 	# navigation to tag and wall avoidance
 	if ((distance_front > limit and override == False) or guessing == True):
 		if (d_x != None):
-			if (d_x > -0.05 and d_x < 0):
+			if (d_x > -0.05 and d_x < 0.05):
 				if (guessing == True):
 					guessing = False
 				oscar_forward(1)
 				if (distance_front < cleaning_limit):
 					override = True
 					print("arrived")
-				sleep(2.5)
-			elif (d_x != None and (d_x > -0.2 or d_x < 0) and distance_front > 50):
+				sleep(5)
+			elif (d_x != None and (d_x < -0.05 or d_x > 0.05)):
 				guessing = True
-				oscar_point_right(1, 20)
-				sleep(1)
-			elif (d_x != None and (d_x > -0.1 or d_x < 0) and distance_front < 60):
-				guessing = True
-				oscar_point_right(1, 20)
+				oscar_point_left(1, 20)
 				sleep(1)
 			else:
 				print("oscar is lost")
@@ -288,22 +289,20 @@ while looping:
 			sleep(1)
 		else:
 			guessing = True
-			oscar_point_right(1, 20)
+			oscar_point_left(1, 20)
 			sleep(1)
 	else:
 		if (guessing == False and override == False):
 			oscar_backward(1)
-			sleep(2.5)
+			sleep(4)
 	
 	# cleaning
 	if (override == True):
 		print("need to clean")
-		'''
 		corner1, corner2 = at_get_corners(frame)
 		blob_check = find_blobs(frame, corner1, corner2)
 		if (blob_check != None):
 			oscar_clean()
-		'''
 		
 	key = cv.waitKey(100)
 	if key == 13:
