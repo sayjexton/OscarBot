@@ -53,9 +53,9 @@ def oscar_stop():
 
 def oscar_forward(speed):
 	front_left_motor.forward(speed)
-	front_right_motor.forward(speed)
+	front_right_motor.forward(speed-0.2)
 	back_left_motor.forward(speed)
-	back_right_motor.forward(speed)
+	back_right_motor.forward(speed-0.2)
 
 def oscar_forward_limited(distance):
 	t=1
@@ -265,17 +265,21 @@ while looping:
 	# navigation to tag and wall avoidance
 	if ((distance_front > limit and override == False) or guessing == True):
 		if (d_x != None):
-			if (d_x > -0.05 and d_x < 0.05):
+			if (d_x > -0.05 and d_x < 0):
 				if (guessing == True):
 					guessing = False
 				oscar_forward(1)
 				if (distance_front < cleaning_limit):
 					override = True
 					print("arrived")
-				sleep(5)
-			elif (d_x != None and (d_x < -0.05 or d_x > 0.05)):
+				sleep(2.5)
+			elif (d_x != None and (d_x > -0.2 or d_x < 0) and distance_front > 50):
 				guessing = True
-				oscar_point_left(1, 20)
+				oscar_point_right(1, 20)
+				sleep(1)
+			elif (d_x != None and (d_x > -0.1 or d_x < 0) and distance_front < 60):
+				guessing = True
+				oscar_point_right(1, 20)
 				sleep(1)
 			else:
 				print("oscar is lost")
@@ -284,12 +288,12 @@ while looping:
 			sleep(1)
 		else:
 			guessing = True
-			oscar_point_left(1, 20)
+			oscar_point_right(1, 20)
 			sleep(1)
 	else:
 		if (guessing == False and override == False):
 			oscar_backward(1)
-			sleep(4)
+			sleep(2.5)
 	
 	# cleaning
 	if (override == True):
