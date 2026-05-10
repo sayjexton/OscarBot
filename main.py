@@ -35,6 +35,7 @@ left_us = DistanceSensor(trigger=0, echo=5)
 right_us = DistanceSensor(trigger=14, echo=15)
 back_us = DistanceSensor(trigger=20, echo=16)
 limit = 25
+cleaning_limit = 30
 
 def servo_up():
 	left_servo.value = 0.9
@@ -104,6 +105,15 @@ def oscar_point_right(speed, deg):
 		back_right_motor.backward(speed)
 	else:
 		print("Invalid degree measure input pointing right.")
+
+def oscar_clean():
+	start = time()
+	while (time() - start < 1):
+		oscar_forward(0.7)
+		servo_up()
+		sleep(0.5)
+		servo_detach()
+		sleep(0.5)
 
 ########### APRILTAG
 fx = 4208
@@ -221,7 +231,7 @@ def find_blobs(frame, corner1, corner2):
 							  (0, 0, 0),
 							  cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 	
-	cv.imshow("Blobs Detected", output)
+	return blob
 
 ########## CAMERA SETUP
 camera = cv.VideoCapture(0)
@@ -252,17 +262,17 @@ while looping:
 	check = at_check(frame)
 	d_x = at_get_delta_x(frame)
 
+	# navigation to tag and wall avoidance
 	if ((distance_front > limit and override == False) or guessing == True):
-		# navigation
 		if (d_x != None):
 			if (d_x > -0.05 and d_x < 0.05):
 				if (guessing == True):
 					guessing = False
 				oscar_forward(1)
-				sleep(2)
-				if (distance_front < limit):
+				if (distance_front < cleaning_limit):
 					override = True
 					print("arrived")
+				sleep(5)
 			elif (d_x != None and (d_x < -0.05 or d_x > 0.05)):
 				guessing = True
 				oscar_point_left(1, 20)
@@ -280,6 +290,16 @@ while looping:
 		if (guessing == False and override == False):
 			oscar_backward(1)
 			sleep(4)
+	
+	# cleaning
+	if (override == True):
+		print("need to clean")
+		'''
+		corner1, corner2 = at_get_corners(frame)
+		blob_check = find_blobs(frame, corner1, corner2)
+		if (blob_check != None):
+			oscar_clean()
+		'''
 		
 	key = cv.waitKey(100)
 	if key == 13:
