@@ -232,7 +232,6 @@ if not camera.isOpened():
 
 ########## MAIN LOOP
 looping = True
-check = "not found"
 
 # initial check
 check = at_check()
