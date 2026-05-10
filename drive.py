@@ -3,6 +3,11 @@ from gpiozero import Servo
 from gpiozero import DistanceSensor
 from time import sleep
 import random
+import sys
+sys.path.append('/home/oscar/oscar_dev/env/lib/python3.13/site-packages')
+import cv2 as cv
+from pupil_apriltags import Detector
+import numpy
 
 # Motors
 front_left_motor = Motor(forward=25, backward=24, enable=18)
@@ -117,13 +122,17 @@ while True:
 		
 		if (distance_left > distance_right):
 			oscar_point_left(1, 90)
+			sleep(1)
 		elif (distance_right < distance_left):
 			oscar_point_right(1, 90)
+			sleep(1)
 		elif (distance_right == distance_left):
 			guess = random.randint(0,1)
 			if (guess == 0):
 				oscar_point_left(1, 90)
+				sleep(1)
 			else:
 				oscar_point_right(1, 90)
+				sleep(1)
 		else:
 			print("Oscar is lost.")
