@@ -280,24 +280,21 @@ while looping:
 		elif (distance_right == distance_left):
 			guess = random.randint(0,1)
 			if (guess == 0):
-				oscar_point_left(1, 90)
-				found = "not detected"
+				oscar_point_left(1,90)
+				found = "not found"
 				found = at_poll(frame)
-				if (found == "detected"):
-				    print ("found")
+				if (found == "found"):
+					print("found")
 					looping = False
 				sleep(1)
 			else:
 				oscar_point_right(1, 90)
 				found = "not detected"
 				found = at_poll(frame)
-				if (found == "detected"):
-				    print ("found")
-					looping = False
 				sleep(1)
 		else:
-			print("Oscar is lost.")
-
+			print("Oscar is lost.")	
+		
 	key = cv.waitKey(100)
 	if key == 13:
 	    looping = False
