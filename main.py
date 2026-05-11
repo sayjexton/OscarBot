@@ -167,7 +167,7 @@ def at_get_delta_x(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		delta_x = r.pose_t[1]
+		delta_x = r.pose_t[0]
 		return delta_x
 
 '''
@@ -290,25 +290,20 @@ while looping:
 		if (d_x != None):
 			override = False
 			# veer right
-			if (d_x > 0 and d_x < 0.7):
-				if (guessing == True):
-					guessing = False
-				oscar_veer_right(1)
-			# veer left
-			elif (d_x > 0.07 and d_x < 0.15):
+			if (d_x < 0.23):
 				if (guessing == True):
 					guessing = False
 				oscar_veer_left(1)
+			# veer left
+			elif (d_x > 0.29):
+				if (guessing == True):
+					guessing = False
+				oscar_veer_right(1)
 			# veer right
-			elif (d_x > 0 and d_x < 0.05):
+			elif (d_x > 0.23 and d_x < 0.28):
 				if (guessing == True):
 					guessing = False
-				oscar_veer_right(1)
-			# veer left
-			elif (d_x > 0.05 and d_x < 0.1):
-				if (guessing == True):
-					guessing = False
-				oscar_veer_left(1)
+				oscar_forward(1)
 			
 			if (distance_front < cleaning_limit):
 				override = True
@@ -319,7 +314,7 @@ while looping:
 			oscar_point_left(1, 20)
 			sleep(1)
 	# avoid crash into wall
-	elif (guessing == False and override == False):
+	elif (distance_front < limit and guessing == False and override == False):
 		oscar_backward(1)
 		sleep(2.5)
 	
