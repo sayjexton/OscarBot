@@ -153,7 +153,7 @@ def at_get_delta_x(frame):
 		tag_size=tag_size)
 
 	for r in results:
-		delta_x = r.pose_t[0]
+		delta_x = r.pose_t[1]
 		return delta_x
 	
 def at_get_h(frame):
@@ -266,22 +266,25 @@ while looping:
 	distance_right = right_us.distance * 100
 	check = at_check(frame)
 	d_x = at_get_delta_x(frame)
+	print(d_x)
 
 	# navigation to tag and wall avoidance
 	if ((distance_front > limit and override == False) or guessing == True):
 		if (d_x != None):
-			if (d_x > -0.05 and d_x < 0.05):
+			if (d_x > 0 and d_x < 0.15):
 				if (guessing == True):
 					guessing = False
 				oscar_forward(1)
+				override = False
 				if (distance_front < cleaning_limit):
 					override = True
 					print("arrived")
 				sleep(5)
-			elif (d_x != None and (d_x < -0.05 or d_x > 0.05)):
+			elif (d_x != None and (d_x < 0.1 or d_x > 0)):
 				guessing = True
 				oscar_point_left(1, 20)
 				sleep(1)
+				override = False
 			else:
 				print("oscar is lost")
 			
@@ -294,7 +297,7 @@ while looping:
 	else:
 		if (guessing == False and override == False):
 			oscar_backward(1)
-			sleep(4)
+			sleep(2)
 	
 	# cleaning
 	if (override == True):
