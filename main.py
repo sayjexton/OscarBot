@@ -37,6 +37,7 @@ back_us = DistanceSensor(trigger=20, echo=16)
 limit = 25
 cleaning_limit = 30
 
+# servo functions
 def servo_detach():
 	left_servo.detach()
 	right_servo.detach()
@@ -48,7 +49,17 @@ def servo_up():
 def servo_down():
 	left_servo.detach()
 	right_servo.value = 0.5
-	 
+
+def oscar_clean():
+	start = time()
+	while (time() - start < 1):
+		oscar_forward(0.5)
+		servo_down()
+		sleep(0.5)
+		servo_up()
+		sleep(0.5)
+
+# drive functions
 def oscar_stop():
 	front_left_motor.stop()
 	front_right_motor.stop()
@@ -110,14 +121,17 @@ def oscar_point_right(speed, deg):
 	else:
 		print("Invalid degree measure input pointing right.")
 
-def oscar_clean():
-	start = time()
-	while (time() - start < 1):
-		oscar_forward(0.5)
-		servo_down()
-		sleep(0.5)
-		servo_up()
-		sleep(0.5)
+def oscar_veer_left(speed):
+	front_left_motor.forward(speed)
+	front_right_motor.forward(speed - 0.3)
+	back_left_motor.forward(speed)
+	back_right_motor.forward(speed - 0.3)
+
+def oscar_veer_right(speed):
+	front_left_motor.forward(speed - 0.3)
+	front_right_motor.forward(speed)
+	back_left_motor.forward(speed - 0.3)
+	back_right_motor.forward(speed)
 
 ########### APRILTAG
 fx = 4208
@@ -155,7 +169,8 @@ def at_get_delta_x(frame):
 	for r in results:
 		delta_x = r.pose_t[1]
 		return delta_x
-	
+
+'''
 def at_get_h(frame):
 	gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
@@ -176,6 +191,7 @@ def at_get_theta(delta_x, h):
 		return theta_deg
 	else:
 		return "no angle"
+'''
 
 def at_get_corners(frame):
 	gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -270,36 +286,43 @@ while looping:
 
 	# navigation to tag and wall avoidance
 	if ((distance_front > limit and override == False) or guessing == True):
+		# if can see tag
 		if (d_x != None):
-			if (d_x > 0 and d_x < 0.15):
+			override = False
+			# veer right
+			if (d_x > 0 and d_x < 0.7):
 				if (guessing == True):
 					guessing = False
-				oscar_forward(1)
-				override = False
-				if (distance_front < cleaning_limit):
-					override = True
-					print("arrived")
-				sleep(5)
-			elif (d_x != None and (d_x < 0.1 or d_x > 0)):
-				guessing = True
-				oscar_point_left(1, 20)
-				sleep(1)
-				override = False
-			else:
-				print("oscar is lost")
+				oscar_veer_right(1)
+			# veer left
+			elif (d_x > 0.07 and d_x < 0.15):
+				if (guessing == True):
+					guessing = False
+				oscar_veer_left(1)
+			# veer right
+			elif (d_x > 0 and d_x < 0.05):
+				if (guessing == True):
+					guessing = False
+				oscar_veer_right(1)
+			# veer left
+			elif (d_x > 0.05 and d_x < 0.1):
+				if (guessing == True):
+					guessing = False
+				oscar_veer_left(1)
 			
-			oscar_stop()
+			if (distance_front < cleaning_limit):
+				override = True
+				print("arrived")
 			sleep(1)
 		else:
 			guessing = True
 			oscar_point_left(1, 20)
 			sleep(1)
-	else:
-		if (guessing == False and override == False):
-			oscar_backward(1)
-			sleep(2)
+	# avoid crash into wall
+	elif (guessing == False and override == False):
+		oscar_backward(1)
+		sleep(2.5)
 	
-	# cleaning
 	if (override == True):
 		print("need to clean")
 		corner1, corner2 = at_get_corners(frame)
