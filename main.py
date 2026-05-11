@@ -275,15 +275,30 @@ while looping:
 	
 	servo_detach()
 	
+	distances = []
+	problem = False
 	distance_front = front_us.distance * 100
 	distance_back = back_us.distance * 100
 	distance_left = left_us.distance * 100
 	distance_right = right_us.distance * 100
+	distances.extend(distance_back, distance_left, distance_right)
+	for distance in distances:
+		if distance < limit:
+			problem = True
+
 	check = at_check(frame)
 	d_x = at_get_delta_x(frame)
 	print(d_x)
 
 	# navigation to tag and wall avoidance
+	if (problem == True):
+		if (distance_left < limit):
+			oscar_point_right(1, 30)
+		elif (distance_right < limit):
+			oscar_point_left(1, 30)
+		elif (distance_back < limit):
+			oscar_forward_limited(1)
+
 	if ((distance_front > limit and override == False) or guessing == True):
 		# if can see tag
 		if (d_x != None):
