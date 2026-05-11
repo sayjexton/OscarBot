@@ -1,4 +1,3 @@
-# sigh
 import sys
 sys.path.append('/home/oscar/oscar_dev/env/lib/python3.13/site-packages')
 
@@ -35,7 +34,7 @@ left_us = DistanceSensor(trigger=0, echo=5)
 right_us = DistanceSensor(trigger=14, echo=15)
 back_us = DistanceSensor(trigger=20, echo=16)
 limit = 25
-cleaning_limit = 30
+cleaning_limit = 20
 
 # servo functions
 def servo_detach():
@@ -43,7 +42,7 @@ def servo_detach():
 	right_servo.detach()
 
 def servo_up():
-	left_servo.detach()
+	left_servo.value = 0.9
 	right_servo.value = 1
 
 def servo_down():
