@@ -281,7 +281,9 @@ while looping:
 	distance_back = back_us.distance * 100
 	distance_left = left_us.distance * 100
 	distance_right = right_us.distance * 100
-	distances.extend(distance_back, distance_left, distance_right)
+	distances.append(distance_back)
+	distances.append(distance_left)
+	distances.append(distance_right)
 	for distance in distances:
 		if distance < limit:
 			problem = True
@@ -294,8 +296,10 @@ while looping:
 	if (problem == True):
 		if (distance_left < limit):
 			oscar_point_right(1, 30)
+			oscar_forward_limited(1)
 		elif (distance_right < limit):
 			oscar_point_left(1, 30)
+			oscar_forward_limited(1)
 		elif (distance_back < limit):
 			oscar_forward_limited(1)
 
@@ -304,17 +308,17 @@ while looping:
 		if (d_x != None):
 			override = False
 			# veer right
-			if (d_x < 0.23):
+			if (d_x < 0.2):
 				if (guessing == True):
 					guessing = False
 				oscar_veer_left(1)
 			# veer left
-			elif (d_x > 0.29):
+			elif (d_x > 0.3):
 				if (guessing == True):
 					guessing = False
 				oscar_veer_right(1)
 			# veer right
-			elif (d_x > 0.23 and d_x < 0.28):
+			elif (d_x > 0.2 and d_x < 0.3):
 				if (guessing == True):
 					guessing = False
 				oscar_forward(1)
@@ -333,10 +337,11 @@ while looping:
 		sleep(2.5)
 	
 	if (override == True):
-		print("need to clean")
+		print("arrived")
 		corner1, corner2 = at_get_corners(frame)
 		blob_check = find_blobs(frame, corner1, corner2)
 		if (blob_check != None):
+			print("blob detected")
 			oscar_clean()
 		
 	key = cv.waitKey(100)
